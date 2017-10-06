@@ -70,16 +70,16 @@
             square.prevY = square.y;
             
             if(moveUp && square.y > 0){
-                square.destY -= 2;
+                square.destY -= 5;
             }
             if(moveDown && square.y < 700){
-                square.destY += 2;
+                square.destY += 5;
             }
             if(moveLeft && square.x > 0){
-                square.destX -= 2;
+                square.destX -= 5;
             }
             if(moveRight && square.x < 700){
-                square.destX += 2;
+                square.destX += 5;
             }
             socket.emit('moveUpdate', square);
             //console.log(square);
