@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+    canvas {
+        margin: 10px;
+        border: 1px solid black;
+      }
+    </style>
+    <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/babel" >
+        "use strict";
+    
+        let canvas;
+        let ctx;
+        let socket;
+        let hash;
+        let moveDown = false;
+        let moveUp = false;
+        let moveRight = false;
+        let moveLeft = false;
+
+        const user = `user${(Math.floor((Math.random()*1000)) + 1)}`;
+
+        let squares = {};
+
+        const update = (data) => {
+            if(!squares[data.hash]) {
+                squares[data.hash] = data;
+                return;
+            }
+            
+            const square = squares[data.hash];
+            
+            if(square.lastUpdate >= data.lastUpdate) {
+                return;
+            }
+            square.lastUpdate = data.lastUpdate;
+            square.x = data.x;
+            square.y = data.y;
+            
+            //square.prevX = data.prevX;
+            //square.prevY = data.prevY;
+            //square.destX = data.destX;
+            //square.destY = data.destY;
+        };
+        
+        const setUser = (data) => {
+            hash = data.hash;
+            squares[hash] = data;
+            requestAnimationFrame(draw);
+        };
+        
+        const removeUser = (hash) => {
+            console.log('removing user');
+          if(squares[hash]){
+              delete squares[hash];
+          }  
+        };
+
+        const updatePosition = () => {
+            const square = squares[hash];
+            //square.prevX = square.x;
+            //square.prevY = square.y;
+            
+            if(moveUp && square.y > 0){
+                square.y -= 2;
+            }
+            if(moveDown && square.y < 700){
+                square.y += 2;
+            }
+            if(moveLeft && square.x > 0){
+                square.x -= 2;
+            }
+            if(moveRight && square.x < 700){
+                square.x += 2;
+            }
+            socket.emit('moveUpdate', square);
+            console.log(square);
+        };
+
+        const draw = (time) => {
+            updatePosition();
+            
+            ctx.clearRect(0, 0, 750, 750);
+            
+            const keys = Object.keys(squares);
+            for(let i = 0; i < keys.length; i++) {
+                const square = squares[keys[i]];
+                if(square.hash === hash){
+                    ctx.fillStyle = "blue";
+                }
+                else {
+                    ctx.fillStyle = "black";
+                }
+                if(square.seeker === true){
+                    ctx.fillStyle = "red";
+                }
+                ctx.fillRect(square.x, square.y, square.width, square.height);
+            }
+            requestAnimationFrame(draw);
+        };
+
+        const keyDownHandler = (e) => {  
+            
+          var keyPressed = e.which;
+            
+          // W key or Up arrow
+          if(keyPressed === 87 || keyPressed === 38) {
+            moveUp = true;
+          }
+          // A key or Left arrow
+          else if(keyPressed === 65 || keyPressed === 37) {
+            moveLeft = true;
+          }
+          // S key or Down arrow
+          else if(keyPressed === 83 || keyPressed === 40) {
+            moveDown = true;
+          }
+          // D key or Right arrow
+          else if(keyPressed === 68 || keyPressed === 39) {
+            moveRight = true;
+          }
+          //Prevent page scrolling
+          if(moveUp || moveDown || moveLeft || moveRight) {
+            e.preventDefault();
+          }
+        };
+        
+        const keyUpHandler = (e) => {
+            
+          var keyPressed = e.which;
+            
+          // W key or Up arrow
+          if(keyPressed === 87 || keyPressed === 38) {
+            moveUp = false;
+          }
+          // A key or Left arrow
+          else if(keyPressed === 65 || keyPressed === 37) {
+            moveLeft = false;
+          }
+          // S key or Down arrow
+          else if(keyPressed === 83 || keyPressed === 40) {
+            moveDown = false;
+          }
+          // D key or Right arrow
+          else if(keyPressed === 68 || keyPressed === 39) {
+            moveRight = false;
+          }       
+        };
+		
+        const sendPosition = () => {
+            socket.emit('moveUpdate', squares[hash]);
+        };
+
+        const collisionHandler = (data) => {
+            squares = data;
+        }
+
+        const init = () =>{
+            canvas = document.querySelector("#canvas");
+            ctx = canvas.getContext("2d");
+            
+            socket = io.connect();
+            
+            socket.on('connect', () =>{
+                //setInterval(sendPosition, 5);
+            });
+            
+            socket.on('joined', setUser);
+            
+            socket.on('updatedMovement', update);
+            
+            socket.on('left', removeUser);
+            
+            socket.on('collision', collisionHandler);
+            
+            document.body.addEventListener('keydown', keyDownHandler);
+            document.body.addEventListener('keyup', keyUpHandler);
+        }
+        
+        
+        window.onload = init;
+        
+    </script>
+</head>
+<body>
+    <canvas id="canvas" height="750" width="750">Please use an HTML 5 browser</canvas>
+    <p>Avoid the red square</p>
+</body>
+</html>

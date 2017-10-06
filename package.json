@@ -1,0 +1,30 @@
+{
+  "name": "syncingdata2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./src/server.js",
+    "pretest": "eslint ./src --fix",
+    "test": "echo \"Tests complete\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RossPerot/syncingdata2.git"
+  },
+  "author": "Ross Hoelscher",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RossPerot/syncingdata2/issues"
+  },
+  "homepage": "https://github.com/RossPerot/syncingdata2#readme",
+  "dependencies": {
+    "socket.io": "^2.0.3",
+    "xxhashjs": "^0.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^4.8.0",
+    "eslint-config-airbnb": "^15.1.0",
+    "eslint-plugin-import": "^2.7.0"
+  }
+}
