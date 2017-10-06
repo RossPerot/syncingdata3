@@ -54,11 +54,19 @@ io.on('connection', (sock) => {
   const socket = sock;
   socket.join('room1');
 
+    var startX = Math.floor(Math.random() * 700);
+    var startY = Math.floor(Math.random() * 700);
+    
   socket.square = {
     hash: xxh.h32(`${socket.id}${new Date().getTime()}`, 0xCAFEBABE).toString(16),
     lastUpdate: new Date().getTime(),
-    x: Math.floor(Math.random() * 700),
-    y: Math.floor(Math.random() * 700),
+    x: startX,
+    y: startY,
+    prevX: startX, 
+    prevY: startY, 
+    destX: startX, 
+    destY: startY, 
+    alpha: 0, 
     height: 50,
     width: 50,
     seeker: false,
