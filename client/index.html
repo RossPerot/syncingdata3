@@ -20,6 +20,7 @@
         let moveUp = false;
         let moveRight = false;
         let moveLeft = false;
+        let jump = false;
 
         const user = `user${(Math.floor((Math.random()*1000)) + 1)}`;
 
@@ -43,8 +44,29 @@
             square.prevX = data.prevX;
             square.prevY = data.prevY;
             square.destX = data.destX;
-            square.destY = data.destY;
+            square.destY = data.destY + data.accelY;
+            if(square.destY > 750)
+            {
+                    square.destY = 750;
+            }
+            if(square.destX > 750)
+            {
+                    square.destX = 750;
+            }
+            if(square.destX < -50)
+            {
+                    square.destX = -50;
+            }
             square.alpha = 0.05;
+        };
+
+        const gravityUpdate = (data) => {
+            
+            const keys = Object.keys(squares);
+            for (let i = 0; i < keys.length; i++) {
+                squares[keys[i]].accelY = data[keys[i]].accelY;
+                //update(squares[keys[i]]);
+            }
         };
         
         const setUser = (data) => {
@@ -70,16 +92,21 @@
             square.prevY = square.y;
             
             if(moveUp && square.y > 0){
-                square.destY -= 5;
+                //square.destY -= 5;
             }
             if(moveDown && square.y < 700){
-                square.destY += 5;
+                //square.destY += 5;
             }
             if(moveLeft && square.x > 0){
                 square.destX -= 5;
             }
             if(moveRight && square.x < 700){
                 square.destX += 5;
+            }
+            if(jump)
+            {
+                square.accelY = -40;   
+                jump = false;
             }
             socket.emit('moveUpdate', square);
             //console.log(square);
@@ -99,11 +126,20 @@
                 else {
                     ctx.fillStyle = "black";
                 }
-                if(square.seeker === true){
-                    ctx.fillStyle = "red";
-                }
                 square.x = lerp(square.prevX, square.destX, square.alpha);
                 square.y = lerp(square.prevY, square.destY, square.alpha);
+                if(square.y > 700)
+                {
+                        square.y = 700;
+                }
+                if(square.x > 700)
+                {
+                        square.x = 700;
+                }
+                if(square.x < 0)
+                {
+                        square.x = 0;
+                }
                 
                 ctx.fillRect(square.x, square.y, square.width, square.height);
             }
@@ -113,7 +149,11 @@
         const keyDownHandler = (e) => {  
             
           var keyPressed = e.which;
+           
             
+          if(keyPressed === 32) {
+            jump = true; 
+          } 
           // W key or Up arrow
           if(keyPressed === 87 || keyPressed === 38) {
             moveUp = true;
@@ -182,6 +222,8 @@
             
             socket.on('updatedMovement', update);
             
+            socket.on('gravity', gravityUpdate);
+            
             socket.on('left', removeUser);
             
             socket.on('collision', collisionHandler);
@@ -197,6 +239,5 @@
 </head>
 <body>
     <canvas id="canvas" height="750" width="750">Please use an HTML 5 browser</canvas>
-    <p>Avoid the red square</p>
 </body>
 </html>

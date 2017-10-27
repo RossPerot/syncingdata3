@@ -21,45 +21,12 @@ const io = socketio(app);
 
 const squares = {};
 
-const checkCollisions = (socket) => {
+const calcGravity = () => {
   const keys = Object.keys(squares);
   for (let i = 0; i < keys.length; i++) {
-    for (let j = 0; j < keys.length; j++) {
-      if (i !== j) {
-        const square1 = squares[keys[i]];
-        const square2 = squares[keys[j]];
-        if (square1.x < square2.x + square2.width && square1.x + square1.width > square2.x &&
-            square1.y < square2.y + square2.height && square1.height + square1.y > square2.y) {
-          if (square1.seeker === true) {
-            const newX = Math.floor(Math.random() * 700);
-            const newY = Math.floor(Math.random() * 700);
-            square2.x = newX;
-            square2.y = newY;
-            square2.prevX = newX;
-            square2.prevY = newY;
-            square2.destX = newX;
-            square2.destY = newY;
-            square1.seeker = false;
-            const key = keys[(Math.floor(Math.random() * keys.length))];
-            squares[key].seeker = true;
-          } else if (square2.seeker === true) {
-            const newX = Math.floor(Math.random() * 700);
-            const newY = Math.floor(Math.random() * 700);
-            square1.x = newX;
-            square1.y = newY;
-            square1.prevX = newX;
-            square1.prevY = newY;
-            square1.destX = newX;
-            square1.destY = newY;
-            square2.seeker = false;
-            const key = keys[(Math.floor(Math.random() * keys.length))];
-            squares[key].seeker = true;
-          }
-          socket.emit('collision', squares);
-        }
-      }
-    }
+    squares[keys[i]].accelY += 10;
   }
+  io.sockets.in('room1').emit('gravity', squares);
 };
 
 io.on('connection', (sock) => {
@@ -67,7 +34,7 @@ io.on('connection', (sock) => {
   socket.join('room1');
 
   const startX = Math.floor(Math.random() * 700);
-  const startY = Math.floor(Math.random() * 700);
+  const startY = 0;
 
   socket.square = {
     hash: xxh.h32(`${socket.id}${new Date().getTime()}`, 0xCAFEBABE).toString(16),
@@ -78,6 +45,7 @@ io.on('connection', (sock) => {
     prevY: startY,
     destX: startX,
     destY: startY,
+    accelY: 0,
     alpha: 0,
     height: 50,
     width: 50,
@@ -95,7 +63,7 @@ io.on('connection', (sock) => {
     socket.square = data;
     socket.square.lastUpdate = new Date().getTime();
     squares[data.hash] = socket.square;
-    checkCollisions(socket);
+    // checkCollisions(socket);
     io.sockets.in('room1').emit('updatedMovement', socket.square);
     // socket.broadcast.to('room1').emit('updatedMovement', socket.square);
   });
@@ -105,4 +73,8 @@ io.on('connection', (sock) => {
     delete squares[socket.square.hash];
     socket.leave('room1');
   });
+
+  setInterval(() => {
+    calcGravity(socket);
+  }, 50);
 });
